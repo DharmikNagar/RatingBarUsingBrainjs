@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .rate {
+            padding: 0 10px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .rate:not(:checked)>input {
+            position: absolute;
+            top: -9999px;
+        }
+
+        .rate:not(:checked)>label {
+            float: right;
+            width: 1em;
+            overflow: hidden;
+            white-space: nowrap;
+            cursor: pointer;
+            font-size: 30px;
+            color: #ccc;
+        }
+
+        .rate:not(:checked)>label:before {
+            content: '★ ';
+        }
+
+        .rate>input:checked~label {
+            color: #ffc700;
+        }
+
+        .rate:not(:checked)>label:hover,
+        .rate:not(:checked)>label:hover~label {
+            color: #deb217;
+        }
+
+        .rate>input:checked+label:hover,
+        .rate>input:checked+label:hover~label,
+        .rate>input:checked~label:hover,
+        .rate>input:checked~label:hover~label,
+        .rate>label:hover~input:checked~label {
+            color: #c59b08;
+        }
+
+        .progressBar {
+            width: 10%;
+            height: 20px;
+        }
+
+        .progressBar::-webkit-progress-bar {
+            background-color: #f1f1f1;
+        }
+
+        .progressBar::-webkit-progress-value {
+            background-color: #4CAF50;
+        }
+
+        .center {
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1 align="center">Sentiment Analysis for Customer Reviews using Brain js(AI Algoritham)</h1>
+
+
+    <div style="height:54px;position: relative;">
+        <h3 align="center">Rate Us</h3>
+        <div class="rate">
+            <input type="radio" id="star5" name="rate" value="5" />
+            <label for="star5" title="text">5 stars</label>
+            <input type="radio" id="star4" name="rate" value="4" />
+            <label for="star4" title="text">4 stars</label>
+            <input type="radio" id="star3" name="rate" value="3" />
+            <label for="star3" title="text">3 stars</label>
+            <input type="radio" id="star2" name="rate" value="2" />
+            <label for="star2" title="text">2 stars</label>
+            <input type="radio" id="star1" name="rate" value="1" />
+            <label for="star1" title="text">1 star</label>
+        </div>
+        <div style="width: 100%;text-align: center;">
+            <button onclick="getrating()">Submit</button>
+        </div>
+    </div>
+
+    <div class="center">
+        <p>Low Rating Bar</p>
+        <progress class="progressBar" value="0" max="100"></progress>
+        <p>neutral Rating Bar</p>
+        <progress class="progressBar" value="0" max="100"></progress>
+        <p>Good Exprerince Rating Bar</p>
+        <progress class="progressBar" value="0" max="100"></progress>
+    </div>
+    <script src="./browser.js"></script>
+    <script>
+
+
+        const review = [
+            {
+                'rating': 3
+            }, {
+                'rating': 2
+            }, {
+                'rating': 5
+            }, {
+                'rating': 4
+            }, {
+                'rating': 1
+            }, {
+                'rating': 1
+            }, {
+                'rating': 5
+            }
+        ]
+
+        setBar()
+        function getrating() {
+            const selectedRating = document.querySelector('input[name="rate"]:checked').value;
+            console.log(selectedRating);
+            review.push({ rating: parseInt(selectedRating) });
+            setBar()
+        }
+
+
+        function setBar() {
+            let low = [], neutral = [], good = []
+
+            console.log(review)
+            const config = {
+                binaryThresh: 0.5,
+                hiddenLayers: [3],
+                activation: 'sigmoid',
+                leakyReluAlpha: 0.01,
+            };
+
+            const net = new brain.NeuralNetwork(config);
+
+            net.train([
+                { input: [1], output: [0.0] },
+                { input: [2], output: [0.3] },
+                { input: [3], output: [0.5] },
+                { input: [4], output: [0.8] },
+                { input: [5], output: [1] },
+            ]);
+
+            review.forEach((input) => {
+                const output = net.run([input.rating]);
+
+                if (output < 0.4) {
+                    low.push(output)
+                }
+                if (output >= 0.4 && output < 0.6) {
+                    neutral.push(output)
+                }
+                if (output >= 0.7 && output <= 1) {
+                    good.push(output)
+                }
+            })
+
+            console.log(`over All Exprerince:low = "${low.length}"   neutral = "${neutral.length}" good = "${good.length}" `)
+
+            let pb = document.getElementsByClassName('progressBar')
+
+            pb[0].value = low.length / review.length * 100
+            pb[1].value = neutral.length / review.length * 100
+            pb[2].value = good.length / review.length * 100
+        }
+
+    </script>
+</body>
+
+</html>
